@@ -1,547 +1,361 @@
 /*
-* CSCI 115 - Term Project 
-* A program build to test different sorting algoritms for expirimental purposes.
+* CSCI 115 - Term Project - Part 2
 * 
+* A program build to test a brute force approach and a more efficient approach to finding if two
+* elements can equal a given sum.
+*
 * Main Program
 * Created by: Jonathan Wheeler
-* 
-* Insertion Sort & Bubble Sort
-* Created by: Ulysses Ochoa
-* 
-* Heap Sort & Quick Sort
-* Created by: Daniel Nunez III
-* 
-* Selection Sort, Merge Sort, Counting Sort, & Radix Sort
-* Created by: Aakash Sharma
-* 
-* Date Created: 6/27/22
+*
+* Date Created: 7/1/22
 */
 
 #include <iostream>
-#include <string>
-#include "BubbleSort.h"
-#include "CountingSort.h"
-#include "Display.h"
-#include "HeapSort.h"
-#include "InsertionSort.h"
-#include "MergeSort.h"
-#include "QuickSort.h"
-#include "RadixSort.h"
-#include "SelectionSort.h"
 using namespace std;
 
-int selectValue(int input); // A function that returns the value of user input
+bool bruteFindSum(int A[], int size, int sum); // A function that uses a brute force approach and takes an array and a given value and finds that the sum of two elements in the array can equal the given value
+bool efficientMergeFindSum(int A[], int size, int sum); // A function that takes an array and a given value and finds that the sum of two elements in the array can equal the given value. This function uses merge sort.
+bool efficientCountFindSum(int A[], int size, int sum); // A function that takes an array and a given value and finds that the sum of two elements in the array can equal the given value. This function uses count sort.
+void merge(int arr[], int left, int middle, int right); // A function to merge two arrays in sorted order
+void merge_sort(int arr[], int left, int right); // A recursive function to divide an array to a single element and merge individual elements to a sorted array
+void count_sort(int Arr[], int size); // A method that utilizes the Counting Sort strategy to sort an array in ascending order
+void zeroFill(int A[], int size); // A function that takes an array and fills each element with a value of 0
+int getMax(int A[], int size); // A function that takes an array and returns the maximum value within that array
 int random(int low, int high); // A function that generates a random number and returns it
-void generateTestData(int Arr[], int size = 100, int type = 0, int low = 0, int high = 1000); // A function that generates an array based on size, type, and range
-void printArray(int Arr[], int size); // A function that prints out a given array.
+void generateTestData(int Arr[], int size = 100, int low = 0, int high = 1000); // A function that generates an array based on size, type, and range
 
 int main()
 {
-	int* Arr;
-	int select = -1, menu = 0, display = 2, arrSize = 1000, type = 2, low = 0, high = 1000, start = 0, end = 0, duration = 0;
-	int dataOptions[6];
-	char input = 'q';
-	bool viewTestingData = false, viewData = false, invalidSelection = false, dataGenerated = false, dataSorted = false, displayChanged = false, testRerun = false;
-	
-	Arr = new int[arrSize];
-	generateTestData(Arr, arrSize);
-	
-	// While loop to run program while user has not requested to quit
-	while (select != 0) {
+	int* data;
 
-		// Welcome Menu Screen
-		if (menu == 0)
-		{
-			Display::welcomeMenu(display);
-			if (invalidSelection) {
-				cout << "\n* ERROR: Invalid Selection - Try Again *" << endl;
-				invalidSelection = false;
-			}
-			cout << "\nSelection: ";
-			cin >> input;
-			select = selectValue(int(tolower(input)));
-			if (select < 0 || select > 3)
-				invalidSelection = true;
-			else
-				menu = select;
-		}
+	// Data array size
+	int size = 100000;
 
-		// Sort Menu Screen
-		else if (menu == 1)
-		{
-			Display::algorithmMenu(display, viewData);
-			if (invalidSelection) {
-				cout << "\n* ERROR: Invalid Selection - Try Again *" << endl;
-				invalidSelection = false;
-			}
-			cout << "\nSelection: ";
-			cin >> input;
-			select = selectValue(int(tolower(input)));
-			if (select < -1 || select > 9 && select != 100)
-				invalidSelection = true;
-			else if (select == -1)
-				menu = 0;
-			else if (select == 100 && viewData)
-				viewData = false;
-			else if (select == 100)
-				viewData = true; 
-			else if (select != -1 && select != 0)
-			{	
-				// Insertion Sort
-				if (select == 1) {
-					do {
-						InsertionSort InsertionSort(Arr, arrSize);
-						start = clock();
-						Display::loadingMenu(display);
-						InsertionSort.sort();
-						dataSorted = true;
-						end = clock();
-						duration = end - start;
-						Display::resultsMenu(display, arrSize, select, type, low, high, duration, viewData, testRerun);
+	// Data array range
+	int low = 0;
+	int high = 9;
 
-						if (dataSorted) {
-							cout << "\nSUCCESS: Data has been sorted!" << endl;
-							dataSorted = false;
-						}
+	// The target sum
+	int sum = 19;
 
-						if (viewData) {
-							cout << "\nUnsorted Data:";
-							printArray(Arr, arrSize);
-							cout << "\nSorted Data:";
-							InsertionSort.print();
-						}
-						testRerun = false;
-						cout << "\nSelection: ";
-						cin >> input;
-						select = selectValue(int(tolower(input)));
-						if (select == -1)
-							menu = 1;
-						else if (select == 114)
-							testRerun = true;
-					} while (testRerun != false);
-				}
+	// Timer variables
+	double start, end, time;
 
-				// Selection Sort
-				else if (select == 2) {
-					do {
-						SelectionSort SelectionSort(Arr, arrSize);
-						start = clock();
-						Display::loadingMenu(display);
-						SelectionSort.sort();
-						dataSorted = true;
-						end = clock();
-						duration = end - start;
-						Display::resultsMenu(display, arrSize, select, type, low, high, duration, viewData, testRerun);
+	// Sum found variable
+	bool found = false;
 
-						if (dataSorted) {
-							cout << "\nSUCCESS: Data has been sorted!" << endl;
-							dataSorted = false;
-						}
+	// Create new test data array and generate data
+	data = new int[size];
+	generateTestData(data, size, low, high);
 
-						if (viewData) {
-							cout << "\nUnsorted Data:";
-							printArray(Arr, arrSize);
-							cout << "\nSorted Data:";
-							SelectionSort.print();
-						}
-						testRerun = false;
-						cout << "\nSelection: ";
-						cin >> input;
-						select = selectValue(int(tolower(input)));
-						if (select == -1)
-							menu = 1;
-						else if (select == 114)
-							testRerun = true;
-					} while (testRerun != false);
-				}
+	// Start brute force example
+	cout << "Brute Force Algorithm:" << endl;
+	start = clock();
+	found = bruteFindSum(data, size, sum);
+	end = clock();
+	if (found)
+		cout << "Sum has been found!" << endl;
+	else
+		cout << "Sum NOT found!" << endl;
+	time = end - start;
+	found = false;
+	cout << "Running Time: " << time << " Milliseconds\n" << endl;
 
-				// Bubble Sort
-				else if (select == 3) {
-					do {
-						BubbleSort BubbleSort(Arr, arrSize);
-						start = clock();
-						Display::loadingMenu(display);
-						BubbleSort.sort();
-						dataSorted = true;
-						end = clock();
-						duration = end - start;
-						Display::resultsMenu(display, arrSize, select, type, low, high, duration, viewData, testRerun);
+	// Reset timer variables
+	start = 0; end = 0; time = 0;
 
-						if (dataSorted) {
-							cout << "\nSUCCESS: Data has been sorted!" << endl;
-							dataSorted = false;
-						}
+	// Start efficient algorithm example
+	cout << "Efficient Algorithm w/ Merge Sort:" << endl;
+	start = clock();
+	found = efficientMergeFindSum(data, size, sum);
+	end = clock();
+	if (found)
+		cout << "Sum has been found!" << endl;
+	else
+		cout << "Sum NOT found!" << endl;
+	time = end - start;
+	found = false;
+	cout << "Running Time: " << time << " Milliseconds\n" << endl;
 
-						if (viewData) {
-							cout << "\nUnsorted Data:";
-							printArray(Arr, arrSize);
-							cout << "\nSorted Data:";
-							BubbleSort.print();
-						}
-						testRerun = false;
-						cout << "\nSelection: ";
-						cin >> input;
-						select = selectValue(int(tolower(input)));
-						if (select == -1)
-							menu = 1;
-						else if (select == 114)
-							testRerun = true;
-					} while (testRerun != false);
-				}
+	// Reset timer variables
+	start = 0; end = 0; time = 0;
 
-				// Merge Sort
-				else if (select == 4) {
-					do {
-						MergeSort MergeSort(Arr, arrSize);
-						start = clock();
-						Display::loadingMenu(display);
-						MergeSort.sort();
-						dataSorted = true;
-						end = clock();
-						duration = end - start;
-						Display::resultsMenu(display, arrSize, select, type, low, high, duration, viewData, testRerun);
+	// Start efficient algorithm example
+	cout << "Efficient Algorithm w/ Count Sort:" << endl;
+	start = clock();
+	found = efficientCountFindSum(data, size, sum);
+	end = clock();
+	if (found)
+		cout << "Sum has been found!" << endl;
+	else
+		cout << "Sum NOT found!" << endl;
+	time = end - start;
+	found = false;
+	cout << "Running Time: " << time << " Milliseconds\n" << endl;
 
-						if (dataSorted) {
-							cout << "\nSUCCESS: Data has been sorted!" << endl;
-							dataSorted = false;
-						}
-
-						if (viewData) {
-							cout << "\nUnsorted Data:";
-							printArray(Arr, arrSize);
-							cout << "\nSorted Data:";
-							MergeSort.print();
-						}
-						testRerun = false;
-						cout << "\nSelection: ";
-						cin >> input;
-						select = selectValue(int(tolower(input)));
-						if (select == -1)
-							menu = 1;
-						else if (select == 114)
-							testRerun = true;
-					} while (testRerun != false);
-				}
-
-				// Heap Sort - Min
-				else if (select == 5) {
-					do {
-						HeapSort HeapSort(Arr, arrSize);
-						start = clock();
-						Display::loadingMenu(display);
-						HeapSort.sortDescending();
-						dataSorted = true;
-						end = clock();
-						duration = end - start;
-						Display::resultsMenu(display, arrSize, select, type, low, high, duration, viewData, testRerun);
-
-						if (dataSorted) {
-							cout << "\nSUCCESS: Data has been sorted!" << endl;
-							dataSorted = false;
-						}
-
-						if (viewData) {
-							cout << "\nUnsorted Data:";
-							printArray(Arr, arrSize);
-							cout << "\nSorted Data:";
-							HeapSort.print();
-						}
-						testRerun = false;
-						cout << "\nSelection: ";
-						cin >> input;
-						select = selectValue(int(tolower(input)));
-						if (select == -1)
-							menu = 1;
-						else if (select == 114)
-							testRerun = true;
-					} while (testRerun != false);
-				}
-
-				// Heap Sort - Max
-				else if (select == 6) {
-					do {
-						HeapSort HeapSort(Arr, arrSize);
-						start = clock();
-						Display::loadingMenu(display);
-						HeapSort.sortAscending();
-						dataSorted = true;
-						end = clock();
-						duration = end - start;
-						Display::resultsMenu(display, arrSize, select, type, low, high, duration, viewData, testRerun);
-
-						if (dataSorted) {
-							cout << "\nSUCCESS: Data has been sorted!" << endl;
-							dataSorted = false;
-						}
-
-						if (viewData) {
-							cout << "\nUnsorted Data:";
-							printArray(Arr, arrSize);
-							cout << "\nSorted Data:";
-							HeapSort.print();
-						}
-						testRerun = false;
-						cout << "\nSelection: ";
-						cin >> input;
-						select = selectValue(int(tolower(input)));
-						if (select == -1)
-							menu = 1;
-						else if (select == 114)
-							testRerun = true;
-					} while (testRerun != false);
-				}
-
-				// Quick Sort
-				else if (select == 7) {
-					do {
-						QuickSort QuickSort(Arr, arrSize);
-						start = clock();
-						Display::loadingMenu(display);
-						QuickSort.sort();
-						dataSorted = true;
-						end = clock();
-						duration = end - start;
-						Display::resultsMenu(display, arrSize, select, type, low, high, duration, viewData, testRerun);
-
-						if (dataSorted) {
-							cout << "\nSUCCESS: Data has been sorted!" << endl;
-							dataSorted = false;
-						}
-
-						if (viewData) {
-							cout << "\nUnsorted Data:";
-							printArray(Arr, arrSize);
-							cout << "\nSorted Data:";
-							QuickSort.print();
-						}
-						testRerun = false;
-						cout << "\nSelection: ";
-						cin >> input;
-						select = selectValue(int(tolower(input)));
-						if (select == -1)
-							menu = 1;
-						else if (select == 114)
-							testRerun = true;
-					} while (testRerun != false);
-				}
-
-				// Counting Sort
-				else if (select == 8) {
-					do {
-						CountingSort CountingSort(Arr, arrSize);
-						start = clock();
-						Display::loadingMenu(display);
-						CountingSort.sort();
-						dataSorted = true;
-						end = clock();
-						duration = end - start;
-						Display::resultsMenu(display, arrSize, select, type, low, high, duration, viewData, testRerun);
-
-						if (dataSorted) {
-							cout << "\nSUCCESS: Data has been sorted!" << endl;
-							dataSorted = false;
-						}
-
-						if (viewData) {
-							cout << "\nUnsorted Data:";
-							printArray(Arr, arrSize);
-							cout << "\nSorted Data:";
-							CountingSort.print();
-						}
-						testRerun = false;
-						cout << "\nSelection: ";
-						cin >> input;
-						select = selectValue(int(tolower(input)));
-						if (select == -1)
-							menu = 1;
-						else if (select == 114)
-							testRerun = true;
-					} while (testRerun != false);
-				}
-
-				// Radix Sort
-				else if (select == 9) {
-					do {
-						RadixSort RadixSort(Arr, arrSize);
-						start = clock();
-						Display::loadingMenu(display);
-						RadixSort.sort();
-						dataSorted = true;
-						end = clock();
-						duration = end - start;
-						Display::resultsMenu(display, arrSize, select, type, low, high, duration, viewData, testRerun);
-
-						if (dataSorted) {
-							cout << "\nSUCCESS: Data has been sorted!" << endl;
-							dataSorted = false;
-						}
-
-						if (viewData) {
-							cout << "\nUnsorted Data:";
-							printArray(Arr, arrSize);
-							cout << "\nSorted Data:";
-							RadixSort.print();
-						}
-						testRerun = false;
-						cout << "\nSelection: ";
-						cin >> input;
-						select = selectValue(int(tolower(input)));
-						if (select == -1)
-							menu = 1;
-						else if (select == 114)
-							testRerun = true;
-					} while (testRerun != false);
-				}
-			}
-
-		}
-
-		// Data Menu Screen
-		else if (menu == 2)
-		{
-			Display::dataMenu(display, viewTestingData);
-			if (viewTestingData) {
-				cout << "\nTesting Data:";
-				printArray(Arr, arrSize);
-			}
-
-			if (invalidSelection) {
-				cout << "\n* ERROR: Invalid Selection - Try Again *" << endl;
-				invalidSelection = false;
-			}
-
-			if (dataGenerated) {
-				cout << "\nSUCCESS: New data generated!" << endl;
-				dataGenerated = false;
-			}
-
-			cout << "\nSelection: ";
-			cin >> input;
-			select = selectValue(int(tolower(input)));
-			if (select < -1 || select > 2)
-				invalidSelection = true;
-			else
-				if (select == 1) {
-					cout << "\nHow many data elements:" << endl;
-					cin >> arrSize;
-					if (arrSize == 0)
-						return 0;
-					cout << "\n(1: Ascending 2: Random 3: Descending 4: Half-Sorted)";
-					cout << "\nWhat type of data array:" << endl;
-					cin >> type;
-					if (type == 0)
-						return 0;
-					if (type == 2) {
-						cout << "\nWhat number for the low of range:" << endl;
-						cin >> low;
-						if (low < 0)
-							low = 0;
-						cout << "\nWhat number for the high of range:" << endl;
-						cin >> high;
-						if (high < low)
-							high = (low + 1) * 10;
-					}
-					if (!(arrSize > 2)) 
-						arrSize = 100;
-					
-					if (!(type > 0 && type < 5))
-						type = 2;
-					
-					Arr = new int[arrSize];
-					generateTestData(Arr, arrSize, type, low, high);
-					cout << "\nGenerating Data..." << endl;
-					dataGenerated = true;
-				}
-				else if (select == 2 && viewTestingData)
-					viewTestingData = false;
-				else if (select == 2)
-					viewTestingData = true;
-				else if (select == -1)
-					menu = 0;
-		}
-
-		// Display Menu Screen
-		else if (menu == 3)
-		{
-			while (select != -1 && select != 0) {
-				Display::displayMenu(display);
-				if (invalidSelection) {
-					cout << "\n* ERROR: Invalid Selection - Try Again *" << endl;
-					invalidSelection = false;
-				}
-
-				if (displayChanged) {
-					cout << "\n* SUCCESS: Display style changed! *" << endl;
-					displayChanged = false;
-				}
-				cout << "\nSelection: ";
-				cin >> input;
-				select = selectValue(int(tolower(input)));
-				if (select > 0 && select <= 3) {
-					display = select;
-					displayChanged = true;
-				}
-				else if (select == -1)
-					menu = 0;
-				else
-					invalidSelection = true;
-			}
-		}
-		// Welcome Menu Screen
-		else
-		{
-			Display::welcomeMenu(display);
-			if (invalidSelection) {
-				cout << "\n* ERROR: Invalid Selection - Try Again *" << endl;
-				invalidSelection = false;
-			}
-			cout << "\nSelection: ";
-			cin >> input;
-			select = selectValue(int(tolower(input)));
-			if (select < 0 || select > 3)
-				invalidSelection = true;
-			else
-				menu = select;
-		}
-		
-		// If select option is 0 exit program
-		if (select == 0)
-			cout << "\nExiting program!" << endl;
-	}
-	
 	return 0;
 }
 
-/*
-* A function that generates a number equivalent of a character and returns that number
+/* 
+* A function that uses a brute force approach and takes an array and a given value and finds
+*  that the sum of two elements in the array can equal the given value
 *
-* @param int input				- The int value of the input character from the user
-* 
-* @returns int select_int		- The int value adjusted for the options provided
+* @param int A[]					- The given array of values
+* @param int size					- The size of the given array
+* @param int sum					- The given value of the sum to find.
+*
+* @returns bool sum_found			- A true or false value that shows if the sum was found
 */
-int selectValue(int input)
+bool bruteFindSum(int A[], int size, int sum)
 {
-	if (input >= 49 && input <= 57)
-		return input - 48;
-	else if (input == 98)
-		return -1;
-	else if (input == 100)
-		return 100;
-	else if (input == 113)
-		return 0;
-	else if (input == 114)
-		return 114;
-	else
-		return -2;
+	for (int i = 0; i < size-1; i++) {
+		for (int j = i+1; j < size; j++) {
+			if (A[i] + A[j] == sum) 
+				return true;
+		}
+	}
+
+	return false;
+}
+
+/* 
+* A function that takes an array and a given value and finds that the sum of two elements
+* in the array can equal the given value. This function uses merge sort.
+* 
+* @param int A[]					- The given array of values
+* @param int size					- The size of the given array
+* @param int sum					- The given value of the sum to find.
+* 
+* @returns bool sum_found			- A true or false value that shows if the sum was found
+*/
+bool efficientMergeFindSum(int A[], int size, int sum)
+{
+	// Perform a merge sort to sort the data
+	merge_sort(A, 0, size-1);
+	
+	// Set two variables - One at the first(left) index and one at the last(right) index
+	int left = 0;
+	int right = size - 1;
+
+	// While the left index is smaller than the right, continue to run
+	while (left < right) {
+		
+		// If A[left] and A[right] produce correct sum, return true
+		if (A[left] + A[right] == sum)
+			return true;
+		// Else if the sum between A[left] and A[right] is less than sum, increment left
+		else if (A[left] + A[right] < sum)
+			left++;
+		// Else if the sum between A[left] and A[right] is greater than sum, decrement right
+		else if (A[left] + A[right] > sum)
+			right--;
+	}
+
+	// Return false if no solution is found
+	return false;
 }
 
 
 /*
-* A function that generates a random number from a range and returns it
+* A function that takes an array and a given value and finds that the sum of two elements
+* in the array can equal the given value. This function uses count sort.
+*
+* @param int A[]					- The given array of values
+* @param int size					- The size of the given array
+* @param int sum					- The given value of the sum to find.
+*
+* @returns bool sum_found			- A true or false value that shows if the sum was found
+*/
+bool efficientCountFindSum(int A[], int size, int sum)
+{
+	// Perform a count sort to sort the data
+	count_sort(A, size);
+
+	// Set two variables - One at the first(left) index and one at the last(right) index
+	int left = 0;
+	int right = size - 1;
+
+	// While the left index is smaller than the right, continue to run
+	while (left < right) {
+
+		// If A[left] and A[right] produce correct sum, return true
+		if (A[left] + A[right] == sum)
+			return true;
+		// Else if the sum between A[left] and A[right] is less than sum, increment left
+		else if (A[left] + A[right] < sum)
+			left++;
+		// Else if the sum between A[left] and A[right] is greater than sum, decrement right
+		else if (A[left] + A[right] > sum)
+			right--;
+	}
+
+	// Return false if no solution is found
+	return false;
+}
+
+
+/* 
+* A function to merge two arrays in sorted order
 * 
+* @param int A[]			- The intial array provided
+* @param int left			- The starting or lowest index
+* @param int middle			- The middle point index
+* @param int right			- The ending or highest index
+* 
+* @returns void
+*/
+void merge(int A[], int left, int middle, int right)
+{
+	// Get the array size for the left and right array
+	int leftSize = middle - left + 1;
+	int rightSize = right - middle;
+
+	// Create two temp arrays; one left and one right
+	int* leftArray = new int[leftSize];
+	int* rightArray = new int[rightSize];
+
+	// Copy data into the left and right temp arrays
+	for (int i = 0; i < leftSize; i++)
+		leftArray[i] = A[i + left];
+
+	for (int i = 0; i < rightSize; i++)
+		rightArray[i] = A[i + middle + 1];
+
+	// Set an index for each array
+	int leftArrayIndex = 0, rightArrayIndex = 0, mergedArrayIndex = left;
+
+	// Merge the arrays
+	while (leftArrayIndex < leftSize && rightArrayIndex < rightSize) {
+		// Check if the left array element is smaller than the right
+		if (leftArray[leftArrayIndex] < rightArray[rightArrayIndex]) {
+			// Add the left array element to the merge array and increment the left index
+			A[mergedArrayIndex] = leftArray[leftArrayIndex];
+			leftArrayIndex++;
+		}
+		else {
+			// Add the right array element to the merge array and increment the right index
+			A[mergedArrayIndex] = rightArray[rightArrayIndex];
+			rightArrayIndex++;
+		}
+		// Increment the merge array index
+		mergedArrayIndex++;
+	}
+
+	// If the left array is not empty
+	while (leftArrayIndex < leftSize) {
+		// Add the left array element to the merge array and increment the left index
+		A[mergedArrayIndex] = leftArray[leftArrayIndex];
+		leftArrayIndex++;
+		// Increment the merge array index
+		mergedArrayIndex++;
+	}
+
+	// If the right array is not empty
+	while (rightArrayIndex < rightSize) {
+		// Add the right array element to the merge array and increment the right index
+		A[mergedArrayIndex] = rightArray[rightArrayIndex];
+		rightArrayIndex++;
+		// Increment the merge array index
+		mergedArrayIndex++;
+	}
+}
+
+/* 
+* A recursive function to divide an array to a single element and merge individual elements to a sorted array
+* 
+* @param int A[]			- The array to be sorted
+* @param int left			- The starting or lowest index
+* @param int right			- The ending or highest index
+* 
+* @return void
+*/
+void merge_sort(int A[], int left, int right)
+{
+	if (left < right)
+	{
+		// Set the middle point
+		int middle = (left + right) / 2;
+
+		// Recursively divide array to one element
+		merge_sort(A, left, middle);
+		merge_sort(A, middle + 1, right);
+
+		// Put the data back together
+		merge(A, left, middle, right);
+	}
+
+}
+
+/*
+* A method that utilizes the Counting Sort strategy to sort an array in ascending order
+*
+* @returns void
+*/
+void count_sort(int Arr[], int size)
+{
+	int max = getMax(Arr, size);
+	int* Count = new int [max+1];
+	int* Output = new int[size];
+
+	for (int i = 0; i <= max; ++i) {
+		Count[i] = 0;
+	}
+	for (int i = 0; i < size; i++) {
+		Count[Arr[i]]++;
+	}
+	for (int i = 1; i <= max; i++) {
+		Count[i] += Count[i - 1];
+	}
+	for (int i = size - 1; i >= 0; i--) {
+		Output[Count[Arr[i]] - 1] = Arr[i];
+		Count[Arr[i]]--;
+	}
+	for (int i = 0; i < size; i++) {
+		Arr[i] = Output[i];
+	}
+}
+
+/*
+* A function that takes an array and fills each element with a value of 0
+*
+* @param int arr[]      - The array to find the maximum value from
+* @param int size       - The size of the given array
+*
+* @returns void
+*/
+void zeroFill(int A[], int size)
+{
+	for (int i = 0; i < size; i++) {
+		A[i] = 0;
+	}
+}
+
+/*
+* A function that takes an array and returns the maximum value within that array
+*
+* @param int arr[]      - The array to find the maximum value from
+* @param int size       - The size of the given array
+*
+* @returns int max      - The maximum value from the given array
+*/
+int getMax(int A[], int size)
+{
+	int max = 0;
+
+	for (int i = 0; i < size; i++) {
+		if (max < A[i])
+			max = A[i];
+	}
+
+	return max;
+}
+
+/*
+* A function that generates a random number from a range and returns it
+*
 * @param int low				- The low value for the range to randomize
 * @param int high				- The high value for the range to randomize
-* 
+*
 * @returns int random_int		- The int value of the random number generated
 */
 int random(int low, int high)
@@ -552,53 +366,18 @@ int random(int low, int high)
 
 /*
 * A function that generates an array of test data based on user specifications of size, type, and range
-* 
+*
 * @param int Arr[]				- A pointer to the main test data Array
 * @param int size				- The size of the array
-* @param int type				- The type of array - 1: Ascending, 2: Random, 3: Descending, 4: Half-Sorted
 * @param int low				- The low value of the range
 * @param int high				- The high value of the range
-* 
+*
 * @returns void
 */
-void generateTestData(int Arr[], int size, int type, int low, int high)
+void generateTestData(int Arr[], int size, int low, int high)
 {
 	srand(time(0));
 	for (int i = 0; i < size; i++) {
-		if (type == 1)
-			Arr[i] = i + 1;
-		else if (type == 2)
-			Arr[i] = random(low, high);
-		else if (type == 3)
-			Arr[i] = size - i;
-		else if (type == 4)
-			if (i < size / 2) {
-				Arr[i] = i + 1;
-			}
-			else {
-				Arr[i] = random(i, size);
-			}
-		else
-			Arr[i] = random(low, high);
+		Arr[i] = random(low, high);
 	}
-}
-
-/*
-* A function that prints out a given array
-* 
-* @param int Arr[]				- The array meant to be printed
-* @param int size				- The size of the array to be printed
-* 
-* @returns void
-*/
-void printArray(int Arr[], int size)
-{
-	cout << "\n[ ";
-	for (int i = 0; i < size; i++) {
-		if (i != size - 1)
-			cout << Arr[i] << ", ";
-		else
-			cout << Arr[i];
-	}
-	cout << " ]" << endl;
 }
